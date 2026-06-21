@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     weather_enable_local_fallback: bool = True
     weather_fallback_wind_speed_kph: float = 10.0
     weather_fallback_soil_moisture_percent: float = 25.0
+    # Default fallback rainfall (mm) and temperature offset (°C) applied to local fallback
+    weather_fallback_rainfall_mm: float = 0.0
+    weather_fallback_temperature_offset: float = 0.0
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
