@@ -26,11 +26,11 @@ async def get_weather_analysis(
             detail=str(exc),
         ) from exc
 
-    irrigation, crop_health_score = decision_engine.analyze(weather, crop)
+    recommendation, crop_health_score = decision_engine.analyze(weather, crop)
     return WeatherAnalysisResponse(
         crop=crop,
         location={"lat": lat, "lon": lon},
         weather=weather,
-        irrigation=irrigation,
+        recommendation=recommendation,
         crop_health_score=crop_health_score,
     )

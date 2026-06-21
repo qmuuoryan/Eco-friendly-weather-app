@@ -11,11 +11,12 @@ export type WeatherAnalysis = {
     soil_moisture_percent: number | null;
     forecast_rainfall_mm: number;
   };
-  irrigation: {
-    should_irrigate: boolean;
-    recommended_water_mm: number;
-    urgency: "low" | "moderate" | "high";
-    rationale: string[];
+  recommendation: {
+    action: string;
+    reason: string;
+    water_savings_liters: number;
+    risk_level: string;
+    advice: string;
   };
   crop_health_score: number;
 };

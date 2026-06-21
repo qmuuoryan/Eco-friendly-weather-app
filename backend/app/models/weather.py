@@ -11,15 +11,18 @@ class WeatherSnapshot(BaseModel):
 
 
 class IrrigationRecommendation(BaseModel):
-    should_irrigate: bool
-    recommended_water_mm: float
-    urgency: str
-    rationale: list[str]
+    """A field-ready irrigation advisory generated from weather signals."""
+
+    action: str
+    reason: str
+    water_savings_liters: int
+    risk_level: str
+    advice: str
 
 
 class WeatherAnalysisResponse(BaseModel):
     crop: str
     location: dict[str, float]
     weather: WeatherSnapshot
-    irrigation: IrrigationRecommendation
+    recommendation: IrrigationRecommendation
     crop_health_score: int

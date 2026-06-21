@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f8f2;
-  --foreground: #172015;
+  --background: #f8faf5;
+  --foreground: #163522;
 }
 
 body {
@@ -13,4 +13,25 @@ body {
 
 * {
   box-sizing: border-box;
+}
+
+html { scroll-behavior: smooth; }
+
+.section-kicker {
+  color: #40834a;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+}
+
+.hero-orb { position: absolute; border-radius: 999px; filter: blur(8px); opacity: .45; }
+.hero-orb-one { width: 31rem; height: 31rem; right: -8rem; top: -15rem; background: #75a84e; }
+.hero-orb-two { width: 22rem; height: 22rem; left: 39%; bottom: -17rem; background: #245d43; }
+.hero-panel { transform: rotate(2deg); }
+.recommendation-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, .85fr); }
+
+@media (max-width: 640px) {
+  .hero-panel { transform: none; }
+  .recommendation-grid { grid-template-columns: 1fr; }
 }

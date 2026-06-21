@@ -25,36 +25,40 @@ class IrrigationDecisionEngine:
 
     def analyze(self, weather: WeatherSnapshot, crop: str) -> tuple[IrrigationRecommendation, int]:
         profile = CROP_PROFILES.get(crop.lower().strip(), DEFAULT_PROFILE)
-        rationale: list[str] = []
         moisture_deficit = max(0.0, profile.target_soil_moisture - (weather.soil_moisture_percent or 0))
         rain_credit = weather.forecast_rainfall_mm + weather.rainfall_mm
 
         if weather.soil_moisture_percent is None:
-            rationale.append("Soil moisture was unavailable; the recommendation uses rainfall signals.")
             moisture_deficit = 15.0 if rain_credit < 5.0 else 0.0
-        elif moisture_deficit > 0:
-            rationale.append(f"Soil moisture is {moisture_deficit:.0f}% below the crop target.")
-        else:
-            rationale.append("Soil moisture is at or above the crop target.")
 
         water_mm = max(0.0, round((moisture_deficit * 0.45) - rain_credit, 1))
-        should_irrigate = water_mm >= 3.0
-        if rain_credit >= 5.0:
-            rationale.append("Recent or forecast rainfall reduces the irrigation requirement.")
-        if should_irrigate:
-            urgency = "high" if water_mm >= 12 else "moderate"
-            rationale.append(f"Apply approximately {water_mm:.1f} mm of water, then reassess soil moisture.")
+        if weather.forecast_rainfall_mm >= 5.0:
+            action = "Delay Irrigation"
+            reason = f"{weather.forecast_rainfall_mm:.1f} mm of rainfall is expected in the next 24 hours."
+            water_savings_liters = int(round(max(water_mm, 3.0) * 100))
+            risk_level = "Low"
+            advice = "Allow the rainfall to recharge the root zone, then reassess soil moisture tomorrow."
+        elif water_mm >= 3.0:
+            action = "Irrigate Today"
+            reason = f"Soil moisture is below the {profile.target_soil_moisture:.0f}% target for {crop.title()}."
+            water_savings_liters = 0
+            risk_level = "High" if water_mm >= 12 else "Moderate"
+            advice = f"Apply approximately {water_mm:.1f} mm of water in an early-morning cycle and reassess afterward."
         else:
-            urgency = "low"
-            rationale.append("No irrigation is currently required.")
+            action = "Maintain Current Schedule"
+            reason = "Available soil moisture and rainfall signals meet the crop's near-term water requirement."
+            water_savings_liters = int(round(max(3.0, rain_credit) * 100)) if rain_credit else 0
+            risk_level = "Low"
+            advice = "Monitor field conditions and run another analysis before the next scheduled irrigation cycle."
 
         health_score = self._health_score(weather, profile)
         return (
             IrrigationRecommendation(
-                should_irrigate=should_irrigate,
-                recommended_water_mm=water_mm,
-                urgency=urgency,
-                rationale=rationale,
+                action=action,
+                reason=reason,
+                water_savings_liters=water_savings_liters,
+                risk_level=risk_level,
+                advice=advice,
             ),
             health_score,
         )
