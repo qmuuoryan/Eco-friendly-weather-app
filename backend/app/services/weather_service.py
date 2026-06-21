@@ -47,16 +47,25 @@ class WeatherService:
         lat_abs = abs(latitude)
         temperature = max(-30.0, min(45.0, 25.0 - (lat_abs / 90.0) * 30.0))
 
-        # Humidity heuristic: a simple function of latitude
-        humidity = max(0.0, min(100.0, 60.0 - (lat_abs / 90.0) * 40.0))
+        # Humidity heuristic: depends on latitude and temperature offset (slightly)
+        temp_offset = float(self._settings.weather_fallback_temperature_offset)
+        humidity_base = 60.0 - (lat_abs / 90.0) * 40.0
+        humidity = max(0.0, min(100.0, humidity_base + (temp_offset * 0.5)))
 
-        # Small default rainfall and forecast
-        rainfall = 0.0
-        forecast_rainfall = 0.0
+        # Default rainfall (configurable) with a tiny crop adjustment for realism
+        rainfall = float(self._settings.weather_fallback_rainfall_mm)
+        if crop.lower() in {"rice", "paddy"}:
+            rainfall += 2.0
+
+        # Forecast rainfall left as the same default for now
+        forecast_rainfall = rainfall
 
         # Use configured defaults for optional values
         wind_speed = float(self._settings.weather_fallback_wind_speed_kph)
         soil_moisture = float(self._settings.weather_fallback_soil_moisture_percent)
+
+        # Apply temperature offset to the heuristic temperature
+        temperature = max(-60.0, min(60.0, temperature + temp_offset))
 
         return WeatherSnapshot(
             temperature_celsius=temperature,
