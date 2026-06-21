@@ -17,9 +17,11 @@ class WeatherService:
         self._settings = settings
 
     async def get_current_conditions(self, latitude: float, longitude: float, crop: str) -> WeatherSnapshot:
-        # If API key isn't configured, use a deterministic local fallback.
+        # If API key isn't configured, optionally use a deterministic local fallback.
         if not self._settings.weather_ai_api_key:
-            return self._local_fallback(latitude, longitude, crop)
+            if self._settings.weather_enable_local_fallback:
+                return self._local_fallback(latitude, longitude, crop)
+            raise WeatherProviderError("Weather AI API key is not configured.")
 
         headers = {"Authorization": f"Bearer {self._settings.weather_ai_api_key}"}
         params = {"lat": latitude, "lon": longitude, "crop": crop}
@@ -29,16 +31,17 @@ class WeatherService:
             try:
                 payload = await self._request_with_retry(client, headers, params)
             except WeatherProviderError:
-                # Fall back to local provider if the external service is unavailable.
-                return self._local_fallback(latitude, longitude, crop)
+                # Fall back to local provider if the external service is unavailable and enabled.
+                if self._settings.weather_enable_local_fallback:
+                    return self._local_fallback(latitude, longitude, crop)
+                raise
         return self._normalise_response(payload)
 
-    @staticmethod
-    def _local_fallback(latitude: float, longitude: float, crop: str) -> WeatherSnapshot:
+    def _local_fallback(self, latitude: float, longitude: float, crop: str) -> WeatherSnapshot:
         """Return a simple deterministic weather snapshot when the external API isn't available.
 
-        The values are heuristic and deterministic so downstream logic and tests can
-        continue to operate without a paid API key.
+        Uses configured defaults from `Settings` so behaviour is configurable for tests
+        and different deployments.
         """
         # Temperature heuristic: warmer near equator, cooler towards poles
         lat_abs = abs(latitude)
@@ -51,9 +54,9 @@ class WeatherService:
         rainfall = 0.0
         forecast_rainfall = 0.0
 
-        # Default optional values
-        wind_speed = 10.0
-        soil_moisture = 25.0
+        # Use configured defaults for optional values
+        wind_speed = float(self._settings.weather_fallback_wind_speed_kph)
+        soil_moisture = float(self._settings.weather_fallback_soil_moisture_percent)
 
         return WeatherSnapshot(
             temperature_celsius=temperature,
