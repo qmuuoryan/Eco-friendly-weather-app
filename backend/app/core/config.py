@@ -8,9 +8,9 @@ class Settings(BaseSettings):
     environment: str = "development"
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: str = ["http://localhost:3000"]
     weather_ai_api_key: str | None = None
-    weather_ai_api_url: str = "https://api.weatherai.com/v1/weather"
+    weather_ai_api_url: str = "https://api.weather-ai.co/v1/weather"
     weather_ai_timeout_seconds: float = 10.0
     weather_ai_max_retries: int = 3
 
