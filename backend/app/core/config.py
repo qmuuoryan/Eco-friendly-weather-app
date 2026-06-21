@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,6 +21,45 @@ class Settings(BaseSettings):
     # Default fallback rainfall (mm) and temperature offset (°C) applied to local fallback
     weather_fallback_rainfall_mm: float = 0.0
     weather_fallback_temperature_offset: float = 0.0
+
+    # Coerce empty-string environment values into sensible defaults so
+    # deployments that set an env var to an empty string do not cause
+    # pydantic validation errors (Render sometimes sets empty values).
+    @field_validator(
+        "weather_fallback_wind_speed_kph",
+        mode="before",
+    )
+    def _validate_wind_speed(cls, v):
+        if v == "" or v is None:
+            return 10.0
+        return v
+
+    @field_validator(
+        "weather_fallback_soil_moisture_percent",
+        mode="before",
+    )
+    def _validate_soil_moisture(cls, v):
+        if v == "" or v is None:
+            return 25.0
+        return v
+
+    @field_validator(
+        "weather_fallback_rainfall_mm",
+        mode="before",
+    )
+    def _validate_rainfall(cls, v):
+        if v == "" or v is None:
+            return 0.0
+        return v
+
+    @field_validator(
+        "weather_fallback_temperature_offset",
+        mode="before",
+    )
+    def _validate_temp_offset(cls, v):
+        if v == "" or v is None:
+            return 0.0
+        return v
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 
